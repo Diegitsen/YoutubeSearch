@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:matcher/matcher.dart';
 import 'package:mockito/mockito.dart';
+import 'package:ytsearch/data/model/detail/model_detail.dart';
 import 'package:ytsearch/data/network/youtube_data_source.dart';
 import 'package:ytsearch/data/model/search/model_search.dart';
-import 'package:ytsearch/data/repository/youtube_repository.dart';
-import 'package:ytsearch/data/model/search/youtube_search_result.dart';
-import 'package:ytsearch/data/network/youtube_data_source.dart';
 import 'package:ytsearch/data/repository/youtube_repository.dart';
 
 class MockYoutubeDataSource extends Mock implements YoutubeDataSource {}
@@ -40,7 +38,7 @@ void main() {
     group('searchVideos', () {
       test(
         'returns a List<SearchItem>',
-        () async {
+            () async {
           when(mockDataSource.searchVideos(
             query: anyNamed('query'),
             pageToken: anyNamed('pageToken'),
@@ -59,14 +57,14 @@ void main() {
 
       test(
         'throws a NoSearchResultsException when calling with an unknown query string',
-        () async {
+            () async {
           when(mockDataSource.searchVideos(
             query: anyNamed('query'),
             pageToken: anyNamed('pageToken'),
           )).thenAnswer((_) async => emptySearchResult);
 
           expect(
-            () => repository.searchVideos('fsadfkjlsadlfasdfaljkal'),
+                () => repository.searchVideos('fsadfkjlsadlfasdfaljkal'),
             throwsA(TypeMatcher<NoSearchResultsException>()),
           );
         },
@@ -76,9 +74,9 @@ void main() {
     group('fetchNextResultPage', () {
       test(
         'throws a SearchNotInitiatedException when called WITHOUT previously calling searchVideos',
-        () {
+            () {
           expect(
-            () => repository.fetchNextResultPage(),
+                () => repository.fetchNextResultPage(),
             throwsA(TypeMatcher<SearchNotInitiatedException>()),
           );
 
@@ -91,7 +89,7 @@ void main() {
 
       test(
         'returns a List<SearchItem> containing the results from the next page when called AFTER calling searchVideos',
-        () async {
+            () async {
           when(mockDataSource.searchVideos(
             query: anyNamed('query'),
             pageToken: anyNamed('pageToken'),
@@ -120,7 +118,7 @@ void main() {
 
       test(
         'throws a NoNextPageTokenException when called if we are at the end of the result list (hence no next page)',
-        () async {
+            () async {
           when(mockDataSource.searchVideos(
             query: anyNamed('query'),
             pageToken: anyNamed('pageToken'),
@@ -129,7 +127,7 @@ void main() {
           await repository.searchVideos('resocoder');
 
           expect(
-            () => repository.fetchNextResultPage(),
+                () => repository.fetchNextResultPage(),
             throwsA(TypeMatcher<NoNextPageTokenException>()),
           );
 
@@ -142,5 +140,42 @@ void main() {
     });
   });
 
+  group('Detail', () {
+    YoutubeVideoResponse videoResponse;
+    YoutubeVideoResponse emptyVideoResponse;
 
+    setUp(() {
+      videoResponse = YoutubeVideoResponse.fromJson(fixture('video_response'));
+      emptyVideoResponse =
+          YoutubeVideoResponse.fromJson(fixture('video_response_empty'));
+    });
+
+    group('fetchVideoInfo', () {
+      test('returns a VideoItem', () async {
+        when(
+          mockDataSource.fetchVideoInfo(id: anyNamed('id')),
+        ).thenAnswer(
+              (_) async => videoResponse,
+        );
+
+        final videoItem = await repository.fetchVideoInfo(id: 'abcd');
+
+        expect(videoItem, videoResponse.items[0]);
+
+        verify(mockDataSource.fetchVideoInfo(id: 'abcd')).called(1);
+      });
+
+      test('throws a NoSuchVideoException when called with a non-existent ID',
+              () async {
+            when(
+              mockDataSource.fetchVideoInfo(id: anyNamed('id')),
+            ).thenAnswer((_) async => emptyVideoResponse);
+
+            expect(
+                  () => repository.fetchVideoInfo(id: 'abcd'),
+              throwsA(TypeMatcher<NoSuchVideoException>()),
+            );
+          });
+    });
+  });
 }

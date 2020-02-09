@@ -1,4 +1,5 @@
 import 'package:built_collection/built_collection.dart';
+import 'package:ytsearch/data/model/detail/model_detail.dart';
 import 'package:ytsearch/data/model/search/model_search.dart';
 import 'package:ytsearch/data/network/youtube_data_source.dart';
 
@@ -44,6 +45,11 @@ class YoutubeRepository {
     return nextPageSearchResult.items;
   }
 
+  Future<VideoItem> fetchVideoInfo({String id}) async {
+    final videoResponse = await _youtubeDataSource.fetchVideoInfo(id: id);
+    if (videoResponse.items.isEmpty) throw NoSuchVideoException();
+    return videoResponse.items[0];
+  }
 }
 
 class NoSearchResultsException implements Exception {

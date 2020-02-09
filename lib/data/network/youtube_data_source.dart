@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:ytsearch/data/model/detail/model_detail.dart';
 import 'package:ytsearch/data/model/search/model_search.dart';
 import 'package:ytsearch/data/network/api_key.dart';
 
@@ -33,6 +34,17 @@ class YoutubeDataSource {
       return YoutubeSearchResult.fromJson(response.body);
     } else {
       throw YoutubeSearchError(json.decode(response.body)['error']['message']);
+    }
+  }
+
+  Future<YoutubeVideoResponse> fetchVideoInfo({String id}) async {
+    final url = _videoBaseUrl + '&id=$id';
+    final response = await client.get(url);
+
+    if (response.statusCode == 200) {
+      return YoutubeVideoResponse.fromJson(response.body);
+    } else {
+      throw YoutubeVideoError(json.decode(response.body)['error']['message']);
     }
   }
 }
